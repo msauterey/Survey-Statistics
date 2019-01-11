@@ -1,6 +1,6 @@
 ---
-title: "GR5234 - HW2"
-author: "Mathieu Sauterey - UNI: mjs2364"
+title: "HW2"
+author: "Mathieu Sauterey"
 date: "September 19, 2018"
 output:
   pdf_document: default
