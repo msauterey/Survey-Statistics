@@ -1,0 +1,296 @@
+---
+title: "HW3"
+author: "Mathieu Sauterey"
+date: "September 26, 2018"
+output:
+  pdf_document: default
+  word_document: default
+---
+
+# Problem 1
+
+Suppose that a city has 90,000 dwelling units of which 35,000 are houses, 45,000 are apartments,
+and 10,000 are condominiums.
+
+(a) You believe that the mean electricity usage is about twice as much for houses as for apartments or condominiums, and that the standard deviation is proportional to the mean so that S1 = 2S2 = 2S3. How would you allocate a stratified sample of 900 observations if you wanted to estimate the mean electricity consumption for all households in the city? 
+
+```{r}
+
+N_h = c(35000, 45000, 10000)
+
+S_h = c(1, 0.5, 0.5)
+
+n = 900
+
+n_h = n*(N_h*S_h/sum(N_h*S_h))
+
+
+```
+
+If assume equal cost of sampling for all units, then we proceed with the following strata allocation:
+
+Sample 504 units from houses
+
+Sample 324 from apartments
+
+Sample 72 from condominiums
+
+## (b) Now suppose that you take a stratified random sample with proportional allocation and want to estimate the overall proportion of houses in which energy conservation is practiced. Suppose 45% of house dwellers, 25% of apartment dwellers, and 12% of condominium residents practice energy conservation. What gain would the stratified sample with proportional allocation offer over an SRS? Calculate V_SRS(pSRS)/V_prop(pstr), and explain what this quantity represents.
+
+```{r}
+
+# SRS
+
+energy_pop = rep(c(0,1,0,1,0,1), times = c(19250, 15750, 33750, 11250, 8800, 1200))
+
+n = 900
+N = 90000
+
+p = mean(energy_pop)
+
+Var_sample_pop_SRS = p*(1-p)*(N-n)/(n*(N-1))
+
+
+# Stratified
+
+N.h = c(35000,45000,10000)
+n.h = n/N*N.h
+p.h = c(0.45,0.25,0.12)
+
+Var_sample_pop_Strat = sum((N.h/N)^2*(N.h-n.h)/(N.h-1)*p.h*(1-p.h)/n.h)
+
+Var_sample_pop_SRS/Var_sample_pop_Strat
+
+```
+The variance of the proportion estimator obtained using stratified sample with proportional allocation is almost half less the variance of the proportion estimator obtained using SRS. 
+
+$V_{SRS}$($\hat{p}_{SRS})$/$V_{prop}$($\hat{p}_{str}$) = 1.0665 which means that it would require a SRS sample size 6.65% larger to obtain a SRS with the same variance than that obtained using proportional stratified sampling. 
+
+# Problem 2
+
+## Compute and interpret an approximate 95% confidence interval for the total number of refereed publications by the 807 university faculty, based on the following simple random sample of 50 faculty members.
+
+```{r}
+
+publi = rep(0:10, times = c(28,4,3,4,4,2,1,0,2,1,1))
+
+n = 50
+N = 807
+
+mean_publi = mean(publi)
+total_publi = mean_publi*N
+print(total_publi)
+
+SE_mean_publi = sqrt(1-n/N)*sd(publi)/sqrt(n)
+SE_total_publi = SE_mean_publi*N
+print(SE_total_publi)
+
+alpha = 0.05
+CI <- total_publi + c(-1,1) * qnorm(1-alpha/2) * SE_total_publi
+print(CI)
+
+```
+
+E[$\hat{t}$] = 1436.46
+
+SE[$\hat{t}$] = 296.50
+
+[ 855.32, 2017.60 ] is a 95% confidence interval of the total number of reefered publications by the 807 university faculty.
+
+# Problem 3
+
+## Install the R package SDaA and obtain the data file $agsrs$. Use these data, a simple random sample of n = 300 counties from the population of N = 3078 counties in the United States, to estimate the total number of acres devoted to farms in the U.S. in 1987. Give a 95% confidence interval.
+
+
+```{r}
+
+library("SDaA")
+
+county_data = agsrs
+
+N = 3078
+
+n = nrow(county_data)
+
+mean_acres = mean(county_data$acres87)
+total_acres = mean_acres*N
+print(total_acres)
+
+SE_mean_acres = sqrt(1-n/N)*sd(county_data$acres87)/sqrt(n)
+SE_total_acres = SE_mean_acres*N
+print(SE_total_acres)
+
+alpha = 0.05
+CI_acres <- total_acres + c(-1,1) * qnorm(1-alpha/2) * SE_total_acres
+print(CI_acres)
+
+```
+
+E[$\hat{t}$] = 929,413,560
+
+SE[$\hat{t}$] = 58,216,264
+
+[815,311,779 ; 1,043,515,342] is a 95% confidence interval of the total number of acres devoted to farms in the US in 1987.
+
+# Problem 4
+
+The data file agstrat, also available in the SDaA package, contains a stratified random sample of counties, using the four census regions of the United States - Northeast, North Central, South, and West - as strata.
+
+## Estimate the total number of acres of land devoted to farms in the U.S. in 1987, along with a 95% confidence interval. How does your interval compare to the one computed from a simple random sample?
+
+```{r}
+
+strat_data = agstrat
+
+list_region = split(strat_data$acres87, strat_data$region)
+
+n.h = sapply(list_region, length)
+
+N.h = c(1054, 220, 1382, 422)
+
+ybar.h = sapply(list_region, mean)
+
+s.h = sapply(list_region, sd)
+
+t.hat_strat = sum(ybar.h*N.h)
+
+V.hat.t <- sum(N.h^2 * s.h^2 / n.h * (1 - n.h/N.h))
+
+SE.t <- sqrt(V.hat.t)
+
+print(t.hat_strat)
+print(SE.t)
+
+alpha = 0.05
+CI_strat <- t.hat_strat + c(-1,1) * qnorm(1-alpha/2) * SE.t
+print(CI_strat)
+
+```
+
+$\hat{t}_{strat}$ = 918,927,973
+
+SE[$\hat{t}_{strat}$] = 50,149,772
+
+[ 820,636,226 ; 1,017,219,719 ] is a 95% confidence interval of the total number of acres devoted to farms in the US in 1987. This interval is narrower and than the confidence interval obtained using SRS. 
+
+# Problem 5
+
+Proportional allocation was used for the stratified sample in the previous problem. You should have found, however, that variability was much higher in the West than in the other regions.
+
+## Using the estimated variances, and assuming that the sampling costs are the same in each stratum, find an optimal allocation for a stratified sample of size 300.
+
+```{r}
+
+N_h = N.h
+
+S_h = s.h
+
+n = 300
+
+n_h = ceiling(n*(N_h*S_h/sum(N_h*S_h)))
+
+
+```
+
+If assume equal cost of sampling for all units, then we proceed with the following strata allocation:
+
+Sample 69 counties from NC
+
+Sample 8 counties from NE
+
+Sample 125 counties from South
+
+Sample 98 from West
+
+# Problem 6
+
+Select a stratified sample of size 300 from the data file agpop, using your allocation in the previous exercise (enter set.seed(5234) just before you take the sample, to ensure your result is reproducible).
+
+## Estimate the total number of acres devoted to farming in the United States in 1987, and give the standard error of your estimate. How does this standard error compare with that found in Exercise 4? Give a 95% confidence interval.
+
+```{r}
+
+set.seed(5234)
+
+strat_data = agpop
+
+sample_NC = sample(which(strat_data$region == "NC"), 69)
+sample_NE = sample(which(strat_data$region == "NE"), 8)
+sample_S = sample(which(strat_data$region == "S"), 125)
+sample_W = sample(which(strat_data$region == "W"), 98)
+
+sample_strat_data = strat_data[c(sample_NC, sample_NE, sample_S, sample_W),]
+
+sample_strat_data = subset(sample_strat_data, acres87 != -99)
+
+list_region = split(sample_strat_data$acres87, sample_strat_data$region)
+
+n.h = c(69, 8, 125, 98)
+
+N.h = c(1054, 220, 1382, 422)
+
+ybar.h = sapply(list_region, mean)
+
+s.h = sapply(list_region, sd)
+
+t.hat_strat = sum(ybar.h*N.h)
+
+V.hat.t <- sum(N.h^2 * s.h^2 / n.h * (1 - n.h/N.h))
+
+SE.t <- sqrt(V.hat.t)
+
+print(t.hat_strat)
+print(SE.t)
+
+alpha = 0.05
+CI_strat <- t.hat_strat + c(-1,1) * qnorm(1-alpha/2) * SE.t
+print(CI_strat)
+
+```
+
+$\hat{t}_{strat}$ = 969,033,789
+
+SE[$\hat{t}_{strat}$] = 48,802,178
+
+[ 873,383,279 ; 1,064,684,300 ] is a 95% confidence interval of the total number of acres devoted to farms in the US in 1987. This SE standard error is narrower than that found in Exercise 4 using proportional sampling. 
+
+# Problem 7
+
+Researchers used a stratified sample to estimate the number of otter dens along the 1400-km coastline of Shetland, UK. The coastline was divided into 237 5-km sections (excluding five sections that were predominantly buildings), and each section was assigned to the stratum whose terrain type predominated. Then sections were chosen randomly from the sections in each stratum. In each section chosen, the investigators counted the total number of dens in a 110-m-wide strip along the coast. The data are in the data file otters, which is available in the R package SDaA.
+
+## Estimate the total number of otter dens in Shetland, along with a standard error for your estimate. Give a 95% confidence interval.
+
+```{r}
+
+data_otters = otters
+
+list_sections = split(data_otters$holts, data_otters$habitat)
+
+otters_n.h = sapply(list_sections, length)
+
+otters_N.h = c(89, 61, 40, 47)
+
+otters_ybar.h = sapply(list_sections, mean)
+
+otters_s.h = sapply(list_sections, sd)
+
+otters_t.hat_strat = sum(otters_ybar.h*otters_N.h)
+
+otters_V.hat.t <- sum(otters_N.h^2 * otters_s.h^2 / otters_n.h * (1 - otters_n.h/otters_N.h))
+
+otters_SE.t <- sqrt(otters_V.hat.t)
+
+print(otters_t.hat_strat)
+print(otters_SE.t)
+
+alpha = 0.05
+otters_CI_strat <- otters_t.hat_strat + c(-1,1) * qnorm(1-alpha/2) * otters_SE.t
+print(otters_CI_strat)
+
+```
+
+$\hat{t}_{strat}$ = 984.71
+
+SE[$\hat{t}_{strat}$] = 73.92
+
+[ 839.83 ; 1129.60 ] is a 95% confidence interval of the total number of otter dens in Shetland.
